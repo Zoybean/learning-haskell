@@ -1,12 +1,10 @@
+module Tree where
+import List (join)
 newtype PlainString = PlainString String
 instance Show PlainString where
     show (PlainString s) = s
 
 data Tree a b = Leaf a | Node b (Tree a b) (Tree a b)
-
-join s [] = ""
-join s (x:[]) = x
-join s (x:xs) = x ++ s ++ (join s xs)
 
 inorder (Leaf x) = show x
 inorder (Node a b c) = join " " ["[", (inorder b), show a, (inorder c), "]"]
