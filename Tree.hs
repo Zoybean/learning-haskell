@@ -1,5 +1,7 @@
 module Tree where
+
 import List (join)
+
 newtype PlainString = PlainString String
 instance Show PlainString where
     show (PlainString s) = s
@@ -17,6 +19,4 @@ postorder (Node a b c) = join " " ["[", (postorder b), (postorder c), show a, "]
 
 main = do
     let tree = Node (PlainString "/") (Leaf 1) (Node (PlainString "+") (Leaf 2) (Leaf 3))
-    print $ inorder tree
-    print $ preorder tree
-    print $ postorder tree
+    mapM_ print $ map ($ tree) [preorder, inorder, postorder]

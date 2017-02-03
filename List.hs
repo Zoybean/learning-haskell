@@ -140,39 +140,36 @@ mayadd :: Maybe Int -> Maybe Int -> Maybe Int
 mayadd ma mb = ma >>= (\a -> mb >>= (\b -> Just (a + b)))
 
 main = do
-    print $ "hello" ++ " world"
-    print $ reverse "nope"
-    print $ map(+2) [3]
-    print $ fmap (+2) (Just 3)
-    print $ range' 1 5
-    print $ range 1 5
-    print $ range' 5 1
-    print $ range 5 1
-    print $ zip [1,2,3] [4,5,6,7]
-    print $ zip [1,2,3,7] [4,5,6]
-    print $ mayadd (Just 1) (Just 2)
-    print $ mayadd Nothing (Just 2)
-    print $ mayadd (Just 1) Nothing
-    --print $ foldl' (-) 0 [1,2,3,4]
-    --print $ foldl (-) 0 [1,2,3,4]
-    print $ foldl (-) 0 [1,2,3,4]
-    print $ foldl' (-) 0 [1,2,3,4]
-    print $ foldr (-) 0 [1,2,3,4]
-    print $ foldr' (-) 0 [1,2,3,4]
-    --print $ reducer (:) [1,2,3,4] -- can't transform with reduce?
-    --let x = []
-    let q = ([6,5,4],[3])-- :: Staq Int
+    mapM_ print ["hello" ++ " world" == "hello world"
+                ,reverse "nope" == "epon"
+                ,map(+2) [3] == [5]
+                ,fmap (+2) (Just 3) == Just 5
+                ,range' 1 5 == Just [1,2,3,4,5]
+                ,range 1 5 == [1,2,3,4,5]
+                ,range' 5 1 == Nothing
+                ,range 5 1 == []
+                ,zip [1,2,3] [4,5,6,7] == [(1,4),(2,5),(3,6)]
+                ,zip [1,2,3,7] [4,5,6] == [(1,4),(2,5),(3,6)]
+                ,mayadd (Just 1) (Just 2) == Just 3
+                ,mayadd Nothing (Just 2) == Nothing
+                ,mayadd (Just 1) Nothing == Nothing
+                ,foldl (-) 0 [1,2,3,4] == -10 -- (((1 - 2) - 3) - 4) - 0
+                ,foldl' (-) 0 [1,2,3,4] == -10
+                ,foldr (-) 0 [1,2,3,4] == -2 -- 1 - (2 - (3 - (4 - 0)))
+                ,foldr' (-) 0 [1,2,3,4] == -2
+                ]
+    
+    let q = ([6,5,4],[1,2,3]) :: Staq Int
     print $ q
     print $ flush q
-    print $ deq q
-    print $ show (deq q) ++ ":" ++ show (rest q)
-    print $ (rest q) >>= (Just . \q -> show (deq q) ++ ":" ++ show (rest q))
-    let mapf = flip fmap -- for when >>= is too cumbersome
-    print $ fmap (\q -> (deq q) `mapf` show `mapf` (++":") >>= (\qs -> (rest q) `mapf` ((qs ++) . show ))) (rest q) -- this line is death
-    --print $ fmap (\q -> fmap (join ":" . (map show)) $ floop [deq q, rest q]) (rest q)
-    print $ floop $ map Just [1,2,3,4,5]
-    print $ floop $ Nothing : ( map Just [1,2,3,4,5])
-    print $ floop' $ map Just [1,2,3,4,5]
-    print $ floop' $ Nothing : ( map Just [1,2,3,4,5])
-    print $ sequence' $ map Just [1,2,3,4,5]
-    print $ sequence' $ Nothing : ( map Just [1,2,3,4,5])
+    let nth q n = iterate (>>= rest) (Just q) !! n
+    let showStaq q = liftA2 (\d r -> join ":" [show d, show r]) (deq q) (rest q)
+    mapM_ print $ map (\n -> (nth q n) >>= showStaq) [0,1,2,3,4,5]
+    
+    mapM_ print [floop (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
+                ,floop (Nothing : ( map Just [1,2,3,4,5])) == Nothing
+                ,floop' (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
+                ,floop' (Nothing : ( map Just [1,2,3,4,5])) == Nothing
+                ,sequence' (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
+                ,sequence' (Nothing : ( map Just [1,2,3,4,5])) == Nothing
+                ]
