@@ -4,8 +4,9 @@ instance Show PlainString where
 
 data Tree a b = Leaf a | Node b (Tree a b) (Tree a b)
 
+join s [] = ""
 join s (x:[]) = x
-join s (x:xs) = x ++ s ++ ( join s xs )
+join s (x:xs) = x ++ s ++ (join s xs)
 
 inorder (Leaf x) = show x
 inorder (Node a b c) = join " " ["[", (inorder b), show a, (inorder c), "]"]
