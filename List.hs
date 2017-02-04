@@ -1,32 +1,6 @@
 module List where
 import Control.Applicative
 import Prelude hiding ((++), reverse, map, zip, any, all, filter, length, maybe)
--- queue (kinda) efficiently implemented as 2 stacks
-type Staq a = ([a],[a])
-newStaq :: [a] -> Staq a
-newStaq xs = (xs,[])
-deq :: Eq a => Staq a -> Maybe a
-deq (e,d)
-    | d == []
-    , e == [] = Nothing
-    | d == []
-    , e /= [] = Just $ head $ reverse e
-    | otherwise = Just $ head d
-rest :: Eq a => Staq a -> Maybe (Staq a)
-rest (e,d)
-    | d == []
-    , e == [] = Nothing
-    | d == []
-    , e /= [] = Just $ ([], tail $ reverse e)
-    | otherwise = Just $ (e, tail d)
-
-enq :: Staq a -> a -> Staq a
-enq (e,d) i = (i:e,d)
-
-flush :: Staq a -> [a]
-flush ([],[]) = []
-flush (e,[]) = flush ([], reverse e)
-flush (e,(d:ds)) = d:flush (e,ds)
 
 -- implementation of (++)
 (++) :: [a] -> [a] -> [a]
@@ -51,22 +25,27 @@ map f (x:xs) = (f x):(map f xs)
 
 -- implementations of range
 range :: Int -> Int -> [Int]
-range a b
-    | a < b = (a : (range (a+1) b ))
+range a b = [a..b]
+
+range' :: Int -> Int -> [Int]
+range' a b
+    | a < b = (a : (range' (a+1) b ))
     | a == b = [a]
     | otherwise = []
-
-range' :: Int -> Int -> Maybe [Int]
-range' a b
-    | a < b = fmap (a:) (range' (a+1) b)
-    | a == b = Just [a]
-    | otherwise = Nothing
 
 -- implementation of zip
 zip :: [a] -> [b] -> [(a,b)]
 zip (a:as) (b:bs) = (a,b):(zip as bs)
 zip [] _ = []
 zip _ [] = []
+
+-- implementation of python's enumerate
+enumerate :: [a] -> [(Int,a)]
+enumerate = zip [0..]
+
+-- implementation of slice (list[a:b] in python)
+slice :: [a] -> Int -> Int -> [a]
+slice xs a b = take (b - a) $ drop a xs
 
 -- implementations of fold
 foldr' :: (b -> a -> a) -> a -> [b] -> a
@@ -124,7 +103,7 @@ floop' (Just x:xs) = fmap (x:) $ floop xs
 --floop'' :: (Foldable t, Alternative t) => t (Maybe a) -> Maybe (t a)
 --floop'' xs = foldr (\x ys -> maybe Nothing (flip (fmap . (<|>) . pure) ys) x) (Just empty) xs --needlessly equivalent
 
--- I still don't understand this one but it is better -- Source: http://stackoverflow.com/a/41986867/6112457
+-- I finally get this one! -- Source: http://stackoverflow.com/a/41986867/6112457
 sequence' :: (Alternative t, Foldable t, Applicative a) => t (a b) -> a (t b)
 sequence' = foldr inject (pure empty)
   where inject = liftA2 prepend
@@ -144,10 +123,10 @@ main = do
                 ,reverse "nope" == "epon"
                 ,map(+2) [3] == [5]
                 ,fmap (+2) (Just 3) == Just 5
-                ,range' 1 5 == Just [1,2,3,4,5]
                 ,range 1 5 == [1,2,3,4,5]
-                ,range' 5 1 == Nothing
+                ,range' 1 5 == [1,2,3,4,5]
                 ,range 5 1 == []
+                ,range' 5 1 == []
                 ,zip [1,2,3] [4,5,6,7] == [(1,4),(2,5),(3,6)]
                 ,zip [1,2,3,7] [4,5,6] == [(1,4),(2,5),(3,6)]
                 ,mayadd (Just 1) (Just 2) == Just 3
@@ -157,16 +136,7 @@ main = do
                 ,foldl' (-) 0 [1,2,3,4] == -10
                 ,foldr (-) 0 [1,2,3,4] == -2 -- 1 - (2 - (3 - (4 - 0)))
                 ,foldr' (-) 0 [1,2,3,4] == -2
-                ]
-    
-    let q = ([6,5,4],[1,2,3]) :: Staq Int
-    print $ q
-    print $ flush q
-    let nth q n = iterate (>>= rest) (Just q) !! n
-    let showStaq q = liftA2 (\d r -> join ":" [show d, show r]) (deq q) (rest q)
-    mapM_ print $ map (\n -> (nth q n) >>= showStaq) [0,1,2,3,4,5]
-    
-    mapM_ print [floop (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
+                ,floop (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
                 ,floop (Nothing : ( map Just [1,2,3,4,5])) == Nothing
                 ,floop' (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
                 ,floop' (Nothing : ( map Just [1,2,3,4,5])) == Nothing
