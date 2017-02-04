@@ -1,6 +1,6 @@
 module List where
 import Control.Applicative
-import Prelude hiding ((++), reverse, map, zip, any, all, filter, length, maybe)
+import Prelude hiding ((++), reverse, map, zip, sum, any, all, filter, length, maybe)
 
 -- implementation of (++)
 (++) :: [a] -> [a] -> [a]
@@ -55,6 +55,10 @@ foldr' f i (x:xs) = f x $ foldr' f i xs
 foldl' :: (a -> b -> a) -> a -> [b] -> a
 foldl' _ i [] = i
 foldl' f i (x:xs) = foldl' f (f i x) xs
+
+-- implementation of sum
+sum :: (Foldable t, Num a) => t a -> a
+sum = foldr (+) 0
 
 -- implementations of any and all
 all :: Foldable t => (a -> Bool) -> t a -> Bool 
