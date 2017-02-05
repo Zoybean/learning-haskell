@@ -4,7 +4,7 @@ fibs :: [Int] -- Fibonacci sequence
 fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 
 fib :: Int -> Int -- Fibonacci number
-fib n = fibs !! n
+fib = (!!) fibs
 
 hcf :: Int -> Int -> Int -- Highest common factor
 hcf 0 y = y
@@ -21,13 +21,14 @@ lb x
 
 lbRnd :: Int -> Maybe Int -- Binary logarithm, rounded nearest
 lbRnd 1 = Just 0
-lbRnd x = let
-            m :: Floating b => Int -> b
-            m x = 2 ** ((fromIntegral x) + 1/2)
-            mid :: Floating b => Int -> Maybe b
-            mid x = fmap m (lb x)
-          in
-            if fmap ((fromIntegral x)<) (mid x) == Just True then lb x else lbMax x
+lbRnd x =
+    let
+        m :: Floating b => Int -> b
+        m x = 2 ** ((fromIntegral x) + 1/2)
+        mid :: Floating b => Int -> Maybe b
+        mid x = fmap m (lb x)
+    in
+        if fmap ((fromIntegral x)<) (mid x) == Just True then lb x else lbMax x
 
 lbMax :: Int -> Maybe Int -- Binary logarithm, rounded up
 lbMax 1 = Just 0

@@ -1,17 +1,29 @@
 module List where
 import Control.Applicative
 import Prelude hiding ((++), reverse, map, zip, sum, any, all, filter, length, maybe)
+import Data.Char --strings 'n' stuff
+
+-- implementation of parseInt
+parseInt :: String -> Int
+parseInt ('-':cs) = negate $ parseInt cs
+parseInt cs = foldl (\t c -> 10 * t + digitToInt c) 0 cs
 
 -- implementation of (++)
 (++) :: [a] -> [a] -> [a]
-(x:xs) ++ ys = x:(xs ++ ys)
-[] ++ ys = ys
+(++) (x:xs) = (:) x $ (++) xs
+(++) [] = id
 
--- implementation of python's join
-join :: String -> [String] -> String
-join s [] = ""
-join s (x:[]) = x
-join s (x:xs) = x ++ s ++ (join s xs)
+-- implementation of intercalate and intersperse
+inter :: (a -> b -> b) -> b -> a -> [a] -> b
+inter _ i _ [] = i
+inter f i _ [x] = f x i -- coerce x into a member of type b
+inter f i s (x:xs) = f x $ f s $ inter f i s xs
+
+intercalate :: [a] -> [[a]] -> [a]
+intercalate = inter (++) []
+
+intersperse :: a -> [a] -> [a]
+intersperse = inter (:) []
 
 -- implementation of reverse
 reverse :: [a] -> [a]
@@ -44,9 +56,32 @@ enumerate :: [a] -> [(Int,a)]
 enumerate = zip [0..]
 
 -- implementation of slice (list[a:b] in python)
-slice :: [a] -> Int -> Int -> [a]
-slice xs a b = take (b - a) $ drop a xs
+slice :: Int -> Int -> [a] -> [a]
+slice a b = take (b - a) . drop a
 
+-- insert element at the first point where preticate is True
+insertif :: (a -> a -> Bool) -> a -> [a] -> [a]
+insertif p i (x:xs)
+    | p i x = i : x : xs
+    | otherwise = x : insertif p i xs
+insertif _ _ [] = []
+
+-- insert each element, at the first point where the preticate is True, in order
+injectif :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+injectif p (i:is) (x:xs)
+    | p i x = i : injectif p is (x:xs)
+    | otherwise = x : injectif p (i:is) xs
+injectif _ [] xs = xs
+injectif _ _ [] = []
+
+-- implementation of next
+next x (i:y:ys) -- take the first two items in the list
+    | x == i = -- if the first item == x, 
+        y : next x (y:ys) -- take the second, and continue to the rest of the list (minus the first element)
+    |otherwise = -- not equal, 
+        next x (y:ys) -- so skip that element
+next _ [_] = [] -- if there's no second element, then stop
+next _ _ = [] -- if the list is empty, stop
 -- implementations of fold
 foldr' :: (b -> a -> a) -> a -> [b] -> a
 foldr' _ i [] = i
@@ -90,19 +125,21 @@ fromMaybe = (`maybe` id)
 
 -- function to floop a list of maybes into a maybe of a list. yeah, not a great description
 floop :: (Foldable t, Alternative t) => t (Maybe a) -> Maybe (t a)
-floop xs = let
-                f :: (Foldable t, Alternative t) => Maybe a -> Maybe (t a) -> Maybe (t a)
-                f Nothing _ = Nothing
-                f (Just x) ys = fmap ((<|>) $ pure x) ys
-                --f x ys = maybe Nothing (flip (fmap . (<|>) . pure) ys) x -- is equivalent
-            in
-                foldr f (Just empty) xs
+floop xs =
+    let
+        f :: (Foldable t, Alternative t) => Maybe a -> Maybe (t a) -> Maybe (t a)
+        f Nothing = const Nothing
+        f (Just x) = fmap ((<|>) $ pure x)
+        --f x ys = maybe Nothing (flip (fmap . (<|>) . pure) ys) x -- is equivalent
+    in
+        foldr f (Just empty) xs
 
 -- simpler, more limited example
 floop' :: [Maybe a] -> Maybe [a]
 floop' [] = Just []
 floop' (Nothing:_) = Nothing
-floop' (Just x:xs) = fmap (x:) $ floop xs
+floop' (Just x:xs) = fmap (x:) . floop $ xs
+--floop' xs = foldr (fmap . (:)) (Just []) xs
 
 --floop'' :: (Foldable t, Alternative t) => t (Maybe a) -> Maybe (t a)
 --floop'' xs = foldr (\x ys -> maybe Nothing (flip (fmap . (<|>) . pure) ys) x) (Just empty) xs --needlessly equivalent
@@ -113,7 +150,6 @@ sequence' = foldr inject (pure empty)
   where inject = liftA2 prepend
         prepend = (<|>) . pure
 
---floop' xs = foldr (fmap . (:)) (Just []) xs
 -- apply each function with the given argument
 applyAll :: [(a -> b)] -> a -> [b]
 applyAll fs x = map ($x) fs
