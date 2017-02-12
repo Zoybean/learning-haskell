@@ -17,7 +17,7 @@ arcs ((qf,c,qt):as) a = arcs as $ arc qf c qt a
         arc :: State -> Char -> State -> DFA -> DFA -- add a single arc from qf on c to qt
         arc qf c qt (DFA qi d f) = DFA qi (Map.insert (qf,c) qt d) f
 
-test :: String -> DFA -> Maybe Bool -- test a string with the DFA
+test :: String -> DFA -> Maybe Bool -- test a string with the DFA. Nothing indicates an unrecognised character was received
 test [] (DFA q _ f) = Just $ elem q f
 test (c:cs) a = increment c a >>= test cs
 
@@ -26,29 +26,27 @@ increment c (DFA q d f) = Map.lookup (q,c) d >>= (\q -> Just $ DFA q d f)
 
 main :: IO ()
 main = do
-    let tests = ["1001" -- bounded
-                ,"010" -- bounded
-                ,"11" -- empty inner string, bounded
+    let tests = ["011000" -- bounded, div by 3
+                ,"111" -- bounded, all 1, div by 3
+                ,"11" -- bounded, all 1
                 ,"0" -- single character
-                ,"" -- empty string
-                ,"0100101" -- different bounding characters
+                ,"" -- all 1, div by 3
+                ,"0100101"
                 ]
     do
         let
-            a = [(0,'0',1)
-                ,(1,'1',1)
-                ,(2,'1',1)
-                ,(1,'0',2)
-                ,(2,'0',2)
-                ,(0,'1',3)
-                ,(3,'0',3)
-                ,(4,'0',3)
-                ,(3,'1',4)
+            a = [(0,'1',1)
+                ,(1,'1',2)
+                ,(2,'1',0)
+                ,(0,'0',4)
+                ,(1,'0',4)
+                ,(2,'0',4)
+                ,(4,'0',4)
                 ,(4,'1',4)
                 ]
             d = arcs a $
-                accepts [2,4] $
-                empty -- any string bounded by a given character: x(.*)x
+                accepts [0] $
+                empty -- any string with a length divisible by 3, that only contains 1s
         mapM_ print $ map (flip test d) $ tests
     putStrLn ""
     do
