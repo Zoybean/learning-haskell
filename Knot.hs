@@ -4,13 +4,11 @@ instance Show a => Show (DList a) where
     show xs = "[" ++ go xs ++ "]"
         where
             go DEmpty = ""
-            go (DNode DEmpty x DEmpty) = show x
-            go (DNode _ x DEmpty) = ".." ++ show x
-            go (DNode DEmpty x xs) = show x ++ "," ++ goOn xs
-            go (DNode _ x xs) = ".." ++ show x ++ "," ++ goOn xs
+            go xs@(DNode DEmpty _ _) = goOn xs
+            go xs = ".." ++ goOn xs
             goOn (DNode _ x DEmpty) = show x
             goOn (DNode _ x xs) = show x ++ "," ++ goOn xs
-
+-- TODO: Implement Functor. This will be difficult
 knotList [] = []
 knotList xs = first
     where
@@ -52,13 +50,13 @@ takeF n (DNode prev x next)
 
 takeB :: Integer -> DList a -> DList a -- take n elements back from the first element, inclusive
 takeB 0 _ = DEmpty
-takeB n xs = takeF n $ iterate (1 - n) xs
+takeB n xs = takeF n $ shift (1 - n) xs
 
-iterate :: Integer -> DList a -> DList a
-iterate n xs@(DNode prev _ next)
-    | n < 0  = iterate (n + 1) prev
+shift :: Integer -> DList a -> DList a
+shift n xs@(DNode prev _ next)
+    | n < 0  = shift (n + 1) prev
     | n == 0 = xs
-    | n > 0  = iterate (n - 1) next
+    | n > 0  = shift (n - 1) next
 
 main :: IO ()
 main = do
