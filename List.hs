@@ -10,7 +10,7 @@ parseInt cs = foldl (\t c -> 10 * t + digitToInt c) 0 cs
 
 -- implementation of (++)
 (++) :: [a] -> [a] -> [a]
-(++) (x:xs) = (:) x $ (++) xs
+(++) (x:xs) = (:) x . (++) xs
 (++) [] = id
 
 -- implementation of intercalate and intersperse
@@ -74,7 +74,7 @@ injectif p (i:is) (x:xs)
 injectif _ [] xs = xs
 injectif _ _ [] = []
 
--- implementation of next
+-- implementation of next (find the list of items that each follow x)
 next x (i:y:ys) -- take the first two items in the list
     | x == i = -- if the first item == x, 
         y : next x (y:ys) -- take the second, and continue to the rest of the list (minus the first element)
