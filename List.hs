@@ -1,7 +1,9 @@
 module List where
 import Control.Applicative
-import Prelude hiding ((++), reverse, map, zip, sum, any, all, filter, length, maybe)
-import Data.Char --strings 'n' stuff
+import Prelude hiding ((++), reverse, map, zip, sum, any, all, filter, length, maybe, elem)
+import Data.Char (digitToInt)
+import Data.Universe.Helpers (diagonal)
+import Data.List (nub)
 
 -- implementation of parseInt
 parseInt :: String -> Int
@@ -36,10 +38,10 @@ map f [] = []
 map f (x:xs) = (f x):(map f xs)
 
 -- implementations of range
-range :: Int -> Int -> [Int]
+range :: Integral n => n -> n -> [n]
 range a b = [a..b]
 
-range' :: Int -> Int -> [Int]
+range' :: Integral n => n -> n -> [n]
 range' a b
     | a < b = (a : (range' (a+1) b ))
     | a == b = [a]
@@ -52,7 +54,7 @@ zip [] _ = []
 zip _ [] = []
 
 -- implementation of python's enumerate
-enumerate :: [a] -> [(Int,a)]
+enumerate :: Integral n => [a] -> [(n,a)]
 enumerate = zip [0..]
 
 -- implementation of slice (list[a:b] in python)
@@ -82,6 +84,7 @@ next x (i:y:ys) -- take the first two items in the list
         next x (y:ys) -- so skip that element
 next _ [_] = [] -- if there's no second element, then stop
 next _ _ = [] -- if the list is empty, stop
+
 -- implementations of fold
 foldr' :: (b -> a -> a) -> a -> [b] -> a
 foldr' _ i [] = i
@@ -102,26 +105,63 @@ all f = foldr ((&&).f) True
 any :: Foldable t => (a -> Bool) -> t a -> Bool 
 any f = foldr ((||).f) False
 
+-- implementation of elem
+elem :: (Eq a, Foldable t) => a -> t a -> Bool
+elem x = any (== x)
+
+-- basic list intersection. ineffective on infinite lists
+intersect :: Eq a => [a] -> [a] -> [a]
+intersect (x:xs) ys
+    | elem x ys = x : intersect xs ys
+    | otherwise = intersect xs ys
+
+isect :: Eq a => [a] -> [a] -> [a]
+isect xs = catMaybes . diagonal . map matches
+    where matches y = [if x == y then Just x else Nothing | x <- xs] -- ensures that non-yields are interleaved with yields
+
+--mFilter :: (a -> Bool) -> [a] -> [Maybe a]
+--mFilter f xs = [if f x then Just x else Nothing | x <- xs]
+
+--mFilter :: (a -> Bool) -> [a] -> [Maybe a]
+--mFilter f (x:xs)
+--    | f x = Just x : mFilter f xs
+--    | otherwise = Nothing : mFilter f xs
+
+boolMaybe :: (a -> Bool) -> a -> Maybe a
+boolMaybe f x
+    | f x = Just x
+    | otherwise = Nothing
+
+mFilter :: (a -> Bool) -> [a] -> [Maybe a]
+mFilter = map . boolMaybe
+
 -- implementation of filter
 filter :: (a -> Bool) -> [a] -> [a]
 filter _ [] = []
 filter f (x:xs)
-    | f x = x:(filter f xs)
+    | f x = x : filter f xs
     | otherwise = filter f xs
 
 -- implementation of length
-length :: Foldable t => t a -> Int
+length :: (Integral n, Foldable t) => t a -> n
 length = foldr ((+).(const 1)) 0
-length' :: [a] -> Int
-length' = sum . (map $ const 1)
+length' :: (Integral n, Functor t, Foldable t) => t a -> n
+length' = sum . (fmap $ const 1)
 
--- implementation of maybe and fromMaybe
+-- implementation of maybe, fromMaybe, and catMaybes
 maybe :: a -> (b -> a) -> (Maybe b) -> a
 maybe d _ Nothing = d
 maybe _ f (Just x) = f x
 
 fromMaybe :: a -> Maybe a -> a
 fromMaybe = (`maybe` id)
+
+catMaybes :: (Foldable t, Alternative t) => t (Maybe a) -> t a
+catMaybes = foldr
+    (\x -> case x of
+        Just x -> (pure x <|>)
+        Nothing -> id
+    ) empty
 
 -- function to floop a list of maybes into a maybe of a list. yeah, not a great description
 floop :: (Foldable t, Alternative t) => t (Maybe a) -> Maybe (t a)
@@ -154,10 +194,6 @@ sequence' = foldr inject (pure empty)
 applyAll :: [(a -> b)] -> a -> [b]
 applyAll fs x = map ($x) fs
 
--- testing out monads and bind
-mayadd :: Maybe Int -> Maybe Int -> Maybe Int
-mayadd ma mb = ma >>= (\a -> mb >>= (\b -> Just (a + b)))
-
 main = do
     mapM_ print ["hello" ++ " world" == "hello world"
                 ,reverse "nope" == "epon"
@@ -169,9 +205,6 @@ main = do
                 ,range' 5 1 == []
                 ,zip [1,2,3] [4,5,6,7] == [(1,4),(2,5),(3,6)]
                 ,zip [1,2,3,7] [4,5,6] == [(1,4),(2,5),(3,6)]
-                ,mayadd (Just 1) (Just 2) == Just 3
-                ,mayadd Nothing (Just 2) == Nothing
-                ,mayadd (Just 1) Nothing == Nothing
                 ,foldl (-) 0 [1,2,3,4] == -10 -- (((1 - 2) - 3) - 4) - 0
                 ,foldl' (-) 0 [1,2,3,4] == -10
                 ,foldr (-) 0 [1,2,3,4] == -2 -- 1 - (2 - (3 - (4 - 0)))
