@@ -34,7 +34,7 @@ strToStr b b' s = strToInt b s >>= intToStr b'
 -- decode a string in the given base to an integer
 strToInt :: Base -> String -> Maybe Integer
 strToInt b@(m,_) (n:ds)
-    | Just n == m = negate <$> strToInt b ds -- only valid at string start, if a negate character is provided
+    | Just n == m = negate <$> strToInt b ds -- only valid at string start, if signed base
 strToInt b@(_,cs) ds = foldl (\t d -> shiftAdd <$> t <*> digitToInt b d) (pure 0) ds
     where
         k :: Integer
