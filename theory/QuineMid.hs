@@ -16,22 +16,23 @@ list =
     ,"list ="
     ]
     ,["dent :: String -> String"
-    ,"dent s = \"    \" ++ s"
+    ,"dent = (\"    \" ++)"
     ,""
     ,"rewrap :: [[String]] -> [String]"
-    ,"rewrap (l:ls) = app \"]\" $ ([l] >>= ins \"[\") ++ (ls >>= ins \",\")"
-    ,"    where"
-    ,"        ins :: String -> [String] -> [String]"
-    ,"        ins x (s:ss) = [x ++ s] ++ ss"
-    ,"        app :: String -> [String] -> [String]"
-    ,"        app x [t] = [x ++ t]"
-    ,"        app x (s:ss) = [s] ++ app x ss"
+    ,"rewrap (l:ls) = app \"]\" $ (pure l >>= pre \"[\") ++ (ls >>= pre \",\")"
+    ,""
+    ,"pre :: [a] -> [[a]] -> [[a]]"
+    ,"pre x (s:ss) = [x ++ s] ++ ss"
+    ,""
+    ,"fil :: [a] -> [[a]] -> [[a]]"
+    ,"fil x (s:ss) = [s] ++ ((x ++) <$> ss)"
+    ,""
+    ,"app :: [a] -> [[a]] -> [[a]]"
+    ,"app x [t] = [t ++ x]"
+    ,"app x (s:ss) = [s] ++ app x ss"
+    ,""
     ,"wrap :: [String] -> [String]"
-    ,"wrap ss = go $ escape <$> ss"
-    ,"    where"
-    ,"        go :: [String] -> [String]"
-    ,"        go []     = [\"[]\"]"
-    ,"        go (s:ss) = [\"[\" ++ s] ++ ((\",\" ++) <$> ss) ++ [\"]\"]"
+    ,"wrap ss = (fil \",\" $ pre \"[\" $ escape <$> ss) ++ [\"]\"]"
     ,""
     ,"escape :: String -> String"
     ,"escape s = [qot] ++ (s >>= escChar) ++ [qot]"
@@ -45,22 +46,23 @@ list =
     ,"            | otherwise  = [chr]"
     ]]
 dent :: String -> String
-dent s = "    " ++ s
+dent = ("    " ++)
 
 rewrap :: [[String]] -> [String]
-rewrap (l:ls) = app "]" $ ([l] >>= ins "[") ++ (ls >>= ins ",")
-    where
-        ins :: String -> [String] -> [String]
-        ins x (s:ss) = [x ++ s] ++ ss
-        app :: String -> [String] -> [String]
-        app x [t] = [x ++ t]
-        app x (s:ss) = [s] ++ app x ss
+rewrap (l:ls) = app "]" $ (pure l >>= pre "[") ++ (ls >>= pre ",")
+
+pre :: [a] -> [[a]] -> [[a]]
+pre x (s:ss) = [x ++ s] ++ ss
+
+fil :: [a] -> [[a]] -> [[a]]
+fil x (s:ss) = [s] ++ ((x ++) <$> ss)
+
+app :: [a] -> [[a]] -> [[a]]
+app x [t] = [t ++ x]
+app x (s:ss) = [s] ++ app x ss
+
 wrap :: [String] -> [String]
-wrap ss = go $ escape <$> ss
-    where
-        go :: [String] -> [String]
-        go []     = ["[]"]
-        go (s:ss) = ["[" ++ s] ++ (("," ++) <$> ss) ++ ["]"]
+wrap ss = (fil "," $ pre "[" $ escape <$> ss) ++ ["]"]
 
 escape :: String -> String
 escape s = [qot] ++ (s >>= escChar) ++ [qot]
