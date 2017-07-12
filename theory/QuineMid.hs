@@ -1,16 +1,16 @@
 main :: IO ()
 main = do
-    putStr $ unlines $ (list !! 0)
+    putStr $ unlines $ list !! 0
     putStr $ unlines $ dent <$> (rewrap $ wrap <$> list)
-    putStr $ unlines $ (list !! 1)
+    putStr $ unlines $ list !! 1
 
 list :: [[String]]
 list =
     [["main :: IO ()"
     ,"main = do"
-    ,"    putStr $ unlines $ (list !! 0)"
+    ,"    putStr $ unlines $ list !! 0"
     ,"    putStr $ unlines $ dent <$> (rewrap $ wrap <$> list)"
-    ,"    putStr $ unlines $ (list !! 1)"
+    ,"    putStr $ unlines $ list !! 1"
     ,""
     ,"list :: [[String]]"
     ,"list ="
@@ -20,6 +20,7 @@ list =
     ,"dent = (\"    \" ++)"
     ,""
     ,"rewrap :: [[String]] -> [String]"
+    ,"rewrap []     = [\"[]\"]"
     ,"rewrap (l:ls) = app \"]\" $ (pure l >>= pre \"[\") ++ (ls >>= pre \",\")"
     ,""
     ,"pre :: [a] -> [[a]] -> [[a]]"
