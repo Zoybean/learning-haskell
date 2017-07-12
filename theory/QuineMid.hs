@@ -15,20 +15,24 @@ list =
     ,"list :: [[String]]"
     ,"list ="
     ]
-    ,["dent :: String -> String"
+    ,[""
+    ,"dent :: String -> String"
     ,"dent = (\"    \" ++)"
     ,""
     ,"rewrap :: [[String]] -> [String]"
     ,"rewrap (l:ls) = app \"]\" $ (pure l >>= pre \"[\") ++ (ls >>= pre \",\")"
     ,""
     ,"pre :: [a] -> [[a]] -> [[a]]"
+    ,"pre x []     = [x]"
     ,"pre x (s:ss) = [x ++ s] ++ ss"
     ,""
     ,"fil :: [a] -> [[a]] -> [[a]]"
+    ,"fil x []     = []"
     ,"fil x (s:ss) = [s] ++ ((x ++) <$> ss)"
     ,""
     ,"app :: [a] -> [[a]] -> [[a]]"
-    ,"app x [t] = [t ++ x]"
+    ,"app x []     = [x]"
+    ,"app x [t]    = [t ++ x]"
     ,"app x (s:ss) = [s] ++ app x ss"
     ,""
     ,"wrap :: [String] -> [String]"
@@ -45,20 +49,25 @@ list =
     ,"            | chr == qot = [esc, qot]"
     ,"            | otherwise  = [chr]"
     ]]
+
 dent :: String -> String
 dent = ("    " ++)
 
 rewrap :: [[String]] -> [String]
+rewrap []     = ["[]"]
 rewrap (l:ls) = app "]" $ (pure l >>= pre "[") ++ (ls >>= pre ",")
 
 pre :: [a] -> [[a]] -> [[a]]
+pre x []     = [x]
 pre x (s:ss) = [x ++ s] ++ ss
 
 fil :: [a] -> [[a]] -> [[a]]
+fil x []     = []
 fil x (s:ss) = [s] ++ ((x ++) <$> ss)
 
 app :: [a] -> [[a]] -> [[a]]
-app x [t] = [t ++ x]
+app x []     = [x]
+app x [t]    = [t ++ x]
 app x (s:ss) = [s] ++ app x ss
 
 wrap :: [String] -> [String]

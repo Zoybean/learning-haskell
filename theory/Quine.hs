@@ -1,13 +1,20 @@
 main :: IO ()
 main = do
-    mapM_ putStrLn header
-    mapM_ putStrLn footer
+    putStr $ unlines $ header
+    putStr $ unlines $ dent <$> wrap header
 
-footer :: [String]
-footer = wrap header
+dent :: String -> String
+dent = ("    " ++)
+
+wrap :: [String] -> [String]
+wrap ss = (fil "," $ pre "[" $ escape <$> ss) ++ ["]"]
     where
-        wrap :: [String] -> [String]
-        wrap (s:ss) = ("    " ++) <$> ["[" ++ escape s] ++ (("," ++) . escape <$> ss) ++ ["]"]
+        pre :: [a] -> [[a]] -> [[a]]
+        pre x []     = [x]
+        pre x (s:ss) = [x ++ s] ++ ss
+        fil :: [a] -> [[a]] -> [[a]]
+        fil x []     = []
+        fil x (s:ss) = [s] ++ ((x ++) <$> ss)
 
 escape :: String -> String
 escape s = [qot] ++ (s >>= escChar) ++ [qot]
@@ -24,14 +31,21 @@ header :: [String]
 header =
     ["main :: IO ()"
     ,"main = do"
-    ,"    mapM_ putStrLn header"
-    ,"    mapM_ putStrLn footer"
+    ,"    putStr $ unlines $ header"
+    ,"    putStr $ unlines $ dent <$> wrap header"
     ,""
-    ,"footer :: [String]"
-    ,"footer = wrap header"
+    ,"dent :: String -> String"
+    ,"dent = (\"    \" ++)"
+    ,""
+    ,"wrap :: [String] -> [String]"
+    ,"wrap ss = (fil \",\" $ pre \"[\" $ escape <$> ss) ++ [\"]\"]"
     ,"    where"
-    ,"        wrap :: [String] -> [String]"
-    ,"        wrap (s:ss) = (\"    \" ++) <$> [\"[\" ++ escape s] ++ ((\",\" ++) . escape <$> ss) ++ [\"]\"]"
+    ,"        pre :: [a] -> [[a]] -> [[a]]"
+    ,"        pre x []     = [x]"
+    ,"        pre x (s:ss) = [x ++ s] ++ ss"
+    ,"        fil :: [a] -> [[a]] -> [[a]]"
+    ,"        fil x []     = []"
+    ,"        fil x (s:ss) = [s] ++ ((x ++) <$> ss)"
     ,""
     ,"escape :: String -> String"
     ,"escape s = [qot] ++ (s >>= escChar) ++ [qot]"
