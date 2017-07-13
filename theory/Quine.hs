@@ -1,20 +1,20 @@
 main :: IO ()
 main = do
-    putStr $ unlines $ header
-    putStr $ unlines $ dent <$> wrap header
+    putStr $ unlines $ file
+    putStr $ unlines $ dent <$> (wrap $ escape <$> file)
 
 dent :: String -> String
 dent = ("    " ++)
 
 wrap :: [String] -> [String]
-wrap ss = (fil "," $ pre "[" $ escape <$> ss) ++ ["]"]
+wrap ss = (pre ("[" ++) $ fil ("," ++) $ ss) ++ ["]"]
     where
-        pre :: [a] -> [[a]] -> [[a]]
-        pre x []     = [x]
-        pre x (s:ss) = [x ++ s] ++ ss
-        fil :: [a] -> [[a]] -> [[a]]
-        fil x []     = []
-        fil x (s:ss) = [s] ++ ((x ++) <$> ss)
+        pre :: ([a] -> [a]) -> [[a]] -> [[a]]
+        pre f []     = [f []]
+        pre f (x:xs) = [f x] ++ xs
+        fil :: ([a] -> [a]) -> [[a]] -> [[a]]
+        fil _ []     = []
+        fil f (x:xs) = [x] ++ (f <$> xs)
 
 escape :: String -> String
 escape s = [qot] ++ (s >>= escChar) ++ [qot]
@@ -27,25 +27,25 @@ escape s = [qot] ++ (s >>= escChar) ++ [qot]
             | chr == qot = [esc, qot]
             | otherwise  = [chr]
 
-header :: [String]
-header =
+file :: [String]
+file =
     ["main :: IO ()"
     ,"main = do"
-    ,"    putStr $ unlines $ header"
-    ,"    putStr $ unlines $ dent <$> wrap header"
+    ,"    putStr $ unlines $ file"
+    ,"    putStr $ unlines $ dent <$> (wrap $ escape <$> file)"
     ,""
     ,"dent :: String -> String"
     ,"dent = (\"    \" ++)"
     ,""
     ,"wrap :: [String] -> [String]"
-    ,"wrap ss = (fil \",\" $ pre \"[\" $ escape <$> ss) ++ [\"]\"]"
+    ,"wrap ss = (pre (\"[\" ++) $ fil (\",\" ++) $ ss) ++ [\"]\"]"
     ,"    where"
-    ,"        pre :: [a] -> [[a]] -> [[a]]"
-    ,"        pre x []     = [x]"
-    ,"        pre x (s:ss) = [x ++ s] ++ ss"
-    ,"        fil :: [a] -> [[a]] -> [[a]]"
-    ,"        fil x []     = []"
-    ,"        fil x (s:ss) = [s] ++ ((x ++) <$> ss)"
+    ,"        pre :: ([a] -> [a]) -> [[a]] -> [[a]]"
+    ,"        pre f []     = [f []]"
+    ,"        pre f (x:xs) = [f x] ++ xs"
+    ,"        fil :: ([a] -> [a]) -> [[a]] -> [[a]]"
+    ,"        fil _ []     = []"
+    ,"        fil f (x:xs) = [x] ++ (f <$> xs)"
     ,""
     ,"escape :: String -> String"
     ,"escape s = [qot] ++ (s >>= escChar) ++ [qot]"
@@ -58,6 +58,6 @@ header =
     ,"            | chr == qot = [esc, qot]"
     ,"            | otherwise  = [chr]"
     ,""
-    ,"header :: [String]"
-    ,"header ="
+    ,"file :: [String]"
+    ,"file ="
     ]

@@ -1,43 +1,42 @@
 main :: IO ()
 main = do
-    putStr $ unlines $ list !! 0
-    putStr $ unlines $ dent <$> (rewrap $ wrap <$> list)
-    putStr $ unlines $ list !! 1
+    putStr $ unlines $ file !! 0
+    putStr $ unlines $ dent <$> (rewrap $ wrap . (escape <$>) <$> file)
+    putStr $ unlines $ file !! 1
 
-list :: [[String]]
-list =
+file :: [[String]]
+file =
     [["main :: IO ()"
     ,"main = do"
-    ,"    putStr $ unlines $ list !! 0"
-    ,"    putStr $ unlines $ dent <$> (rewrap $ wrap <$> list)"
-    ,"    putStr $ unlines $ list !! 1"
+    ,"    putStr $ unlines $ file !! 0"
+    ,"    putStr $ unlines $ dent <$> (rewrap $ wrap . (escape <$>) <$> file)"
+    ,"    putStr $ unlines $ file !! 1"
     ,""
-    ,"list :: [[String]]"
-    ,"list ="
+    ,"file :: [[String]]"
+    ,"file ="
     ]
     ,[""
     ,"dent :: String -> String"
     ,"dent = (\"    \" ++)"
     ,""
     ,"rewrap :: [[String]] -> [String]"
-    ,"rewrap []     = [\"[]\"]"
-    ,"rewrap (l:ls) = app \"]\" $ (pure l >>= pre \"[\") ++ (ls >>= pre \",\")"
+    ,"rewrap = concat . pre (pre (\"[\" ++)) . fil (pre (\",\" ++)) . app (app (++ \"]\"))"
     ,""
-    ,"pre :: [a] -> [[a]] -> [[a]]"
-    ,"pre x []     = [x]"
-    ,"pre x (s:ss) = [x ++ s] ++ ss"
+    ,"pre :: ([a] -> [a]) -> [[a]] -> [[a]]"
+    ,"pre f []     = [f []]"
+    ,"pre f (x:xs) = [f x] ++ xs"
     ,""
-    ,"fil :: [a] -> [[a]] -> [[a]]"
-    ,"fil x []     = []"
-    ,"fil x (s:ss) = [s] ++ ((x ++) <$> ss)"
+    ,"fil :: ([a] -> [a]) -> [[a]] -> [[a]]"
+    ,"fil _ []     = []"
+    ,"fil f (x:xs) = [x] ++ (f <$> xs)"
     ,""
-    ,"app :: [a] -> [[a]] -> [[a]]"
-    ,"app x []     = [x]"
-    ,"app x [t]    = [t ++ x]"
-    ,"app x (s:ss) = [s] ++ app x ss"
+    ,"app :: ([a] -> [a]) -> [[a]] -> [[a]]"
+    ,"app f []     = [f []]"
+    ,"app f [x]    = [f x]"
+    ,"app f (x:xs) = [x] ++ app f xs"
     ,""
     ,"wrap :: [String] -> [String]"
-    ,"wrap ss = (fil \",\" $ pre \"[\" $ escape <$> ss) ++ [\"]\"]"
+    ,"wrap ss = (pre (\"[\" ++) $ fil (\",\" ++) $ ss) ++ [\"]\"]"
     ,""
     ,"escape :: String -> String"
     ,"escape s = [qot] ++ (s >>= escChar) ++ [qot]"
@@ -55,24 +54,23 @@ dent :: String -> String
 dent = ("    " ++)
 
 rewrap :: [[String]] -> [String]
-rewrap []     = ["[]"]
-rewrap (l:ls) = app "]" $ (pure l >>= pre "[") ++ (ls >>= pre ",")
+rewrap = concat . pre (pre ("[" ++)) . fil (pre ("," ++)) . app (app (++ "]"))
 
-pre :: [a] -> [[a]] -> [[a]]
-pre x []     = [x]
-pre x (s:ss) = [x ++ s] ++ ss
+pre :: ([a] -> [a]) -> [[a]] -> [[a]]
+pre f []     = [f []]
+pre f (x:xs) = [f x] ++ xs
 
-fil :: [a] -> [[a]] -> [[a]]
-fil x []     = []
-fil x (s:ss) = [s] ++ ((x ++) <$> ss)
+fil :: ([a] -> [a]) -> [[a]] -> [[a]]
+fil _ []     = []
+fil f (x:xs) = [x] ++ (f <$> xs)
 
-app :: [a] -> [[a]] -> [[a]]
-app x []     = [x]
-app x [t]    = [t ++ x]
-app x (s:ss) = [s] ++ app x ss
+app :: ([a] -> [a]) -> [[a]] -> [[a]]
+app f []     = [f []]
+app f [x]    = [f x]
+app f (x:xs) = [x] ++ app f xs
 
 wrap :: [String] -> [String]
-wrap ss = (fil "," $ pre "[" $ escape <$> ss) ++ ["]"]
+wrap ss = (pre ("[" ++) $ fil ("," ++) $ ss) ++ ["]"]
 
 escape :: String -> String
 escape s = [qot] ++ (s >>= escChar) ++ [qot]
