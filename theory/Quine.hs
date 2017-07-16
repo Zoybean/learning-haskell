@@ -1,13 +1,18 @@
+-- Print the string copy of the source code
 main :: IO ()
 main = do
-    putStr $ unlines $ file
-    putStr $ unlines $ dent <$> (wrap $ escape <$> file)
+    putStr $ unlines $ file -- the program body
+    putStr $ unlines $ dent <$> (wrap $ escape <$> file) -- the string copy
 
+-- Indent a line with 4 spaces
 dent :: String -> String
 dent = ("    " ++)
 
+-- Make a list of strings resemble the lines of a list of strings in haskell syntax
 wrap :: [String] -> [String]
-wrap ss = (pre ("[" ++) $ fil ("," ++) $ ss) ++ ["]"]
+wrap ss = (pre ("[" ++) -- prepend a '[' to the first line
+          $ fil ("," ++) $ ss) -- prepend a ',' to all but the first line
+          ++ ["]"] -- append a line which contains a ']'
     where
         pre :: ([a] -> [a]) -> [[a]] -> [[a]]
         pre f []     = [f []]
@@ -16,6 +21,7 @@ wrap ss = (pre ("[" ++) $ fil ("," ++) $ ss) ++ ["]"]
         fil _ []     = []
         fil f (x:xs) = [x] ++ (f <$> xs)
 
+-- Escape a string
 escape :: String -> String
 escape s = [qot] ++ (s >>= escChar) ++ [qot]
     where
@@ -27,18 +33,24 @@ escape s = [qot] ++ (s >>= escChar) ++ [qot]
             | chr == qot = [esc, qot]
             | otherwise  = [chr]
 
+-- The internal representation of the program's own source code
 file :: [String]
 file =
-    ["main :: IO ()"
+    ["-- Print the string copy of the source code"
+    ,"main :: IO ()"
     ,"main = do"
-    ,"    putStr $ unlines $ file"
-    ,"    putStr $ unlines $ dent <$> (wrap $ escape <$> file)"
+    ,"    putStr $ unlines $ file -- the program body"
+    ,"    putStr $ unlines $ dent <$> (wrap $ escape <$> file) -- the string copy"
     ,""
+    ,"-- Indent a line with 4 spaces"
     ,"dent :: String -> String"
     ,"dent = (\"    \" ++)"
     ,""
+    ,"-- Make a list of strings resemble the lines of a list of strings in haskell syntax"
     ,"wrap :: [String] -> [String]"
-    ,"wrap ss = (pre (\"[\" ++) $ fil (\",\" ++) $ ss) ++ [\"]\"]"
+    ,"wrap ss = (pre (\"[\" ++) -- prepend a '[' to the first line"
+    ,"          $ fil (\",\" ++) $ ss) -- prepend a ',' to all but the first line"
+    ,"          ++ [\"]\"] -- append a line which contains a ']'"
     ,"    where"
     ,"        pre :: ([a] -> [a]) -> [[a]] -> [[a]]"
     ,"        pre f []     = [f []]"
@@ -47,6 +59,7 @@ file =
     ,"        fil _ []     = []"
     ,"        fil f (x:xs) = [x] ++ (f <$> xs)"
     ,""
+    ,"-- Escape a string"
     ,"escape :: String -> String"
     ,"escape s = [qot] ++ (s >>= escChar) ++ [qot]"
     ,"    where"
@@ -58,6 +71,7 @@ file =
     ,"            | chr == qot = [esc, qot]"
     ,"            | otherwise  = [chr]"
     ,""
+    ,"-- The internal representation of the program's own source code"
     ,"file :: [String]"
     ,"file ="
     ]
