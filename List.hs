@@ -1,6 +1,5 @@
 module List where
 import Control.Applicative
-import Prelude hiding ((++), reverse, map, zip, sum, any, all, filter, length, maybe, elem)
 import Data.Char (digitToInt)
 import Data.Universe.Helpers (diagonal)
 import Data.List (nub)
@@ -10,34 +9,7 @@ parseInt :: String -> Int
 parseInt ('-':cs) = negate $ parseInt cs
 parseInt cs = foldl (\t c -> 10 * t + digitToInt c) 0 cs
 
--- implementation of (++)
-(++) :: [a] -> [a] -> [a]
-(++) (x:xs) = (:) x . (++) xs
-(++) [] = id
-
--- implementation of intercalate and intersperse
-inter :: (a -> b -> b) -> b -> a -> [a] -> b
-inter _ i _ [] = i
-inter f i _ [x] = f x i -- coerce x into a member of type b
-inter f i s (x:xs) = f x $ f s $ inter f i s xs
-
-intercalate :: [a] -> [[a]] -> [a]
-intercalate = inter (++) []
-
-intersperse :: a -> [a] -> [a]
-intersperse = inter (:) []
-
--- implementation of reverse
-reverse :: [a] -> [a]
-reverse [] = []
-reverse (x:xs) = (++) (reverse xs) [x]
-
--- implementation of map
-map :: (a -> b) -> [a] -> [b]
-map f [] = []
-map f (x:xs) = (f x):(map f xs)
-
--- implementations of range
+-- python range (but inclusive)
 range :: Integral n => n -> n -> [n]
 range a b = [a..b]
 
@@ -47,17 +19,11 @@ range' a b
     | a == b = [a]
     | otherwise = []
 
--- implementation of zip
-zip :: [a] -> [b] -> [(a,b)]
-zip (a:as) (b:bs) = (a,b):(zip as bs)
-zip [] _ = []
-zip _ [] = []
-
--- implementation of python's enumerate
+-- python enumerate
 enumerate :: Integral n => [a] -> [(n,a)]
 enumerate = zip [0..]
 
--- implementation of slice (list[a:b] in python)
+-- python slice (list[a:b])
 slice :: Int -> Int -> [a] -> [a]
 slice a b = take (b - a) . drop a
 
@@ -76,7 +42,7 @@ injectif p (i:is) (x:xs)
 injectif _ [] xs = xs
 injectif _ _ [] = []
 
--- implementation of next (find the list of items that each follow x)
+-- find the list of items that each follow x
 next x (i:y:ys) -- take the first two items in the list
     | x == i = -- if the first item == x, 
         y : next x (y:ys) -- take the second, and continue to the rest of the list (minus the first element)
@@ -85,39 +51,13 @@ next x (i:y:ys) -- take the first two items in the list
 next _ [_] = [] -- if there's no second element, then stop
 next _ _ = [] -- if the list is empty, stop
 
--- implementations of fold
-foldr' :: (b -> a -> a) -> a -> [b] -> a
-foldr' _ i [] = i
-foldr' f i (x:xs) = f x $ foldr' f i xs
-
-foldl' :: (a -> b -> a) -> a -> [b] -> a
-foldl' _ i [] = i
-foldl' f i (x:xs) = foldl' f (f i x) xs
-
--- implementation of sum
-sum :: (Foldable t, Num a) => t a -> a
-sum = foldr (+) 0
-
--- implementations of any and all
-all :: Foldable t => (a -> Bool) -> t a -> Bool 
-all f = foldr ((&&).f) True 
-
-any :: Foldable t => (a -> Bool) -> t a -> Bool 
-any f = foldr ((||).f) False
-
--- implementation of elem
-elem :: (Eq a, Foldable t) => a -> t a -> Bool
-elem x = any (== x)
-
--- basic list intersection. ineffective on infinite lists
-intersect :: Eq a => [a] -> [a] -> [a]
-intersect (x:xs) ys
-    | elem x ys = x : intersect xs ys
-    | otherwise = intersect xs ys
-
+-- list intersection which works on infinite lists
 isect :: Eq a => [a] -> [a] -> [a]
-isect xs = catMaybes . diagonal . map matches
-    where matches y = [if x == y then Just x else Nothing | x <- xs] -- ensures that non-yields are interleaved with yields
+isect = isectBy (==)
+
+isectBy :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+isectBy eq xs = catMaybes . diagonal . map matches
+    where matches y = [if eq x y then Just x else Nothing | x <- xs] -- ensures that non-yields are interleaved with yields
 
 --mFilter :: (a -> Bool) -> [a] -> [Maybe a]
 --mFilter f xs = [if f x then Just x else Nothing | x <- xs]
@@ -135,24 +75,7 @@ boolMaybe f x
 mFilter :: (a -> Bool) -> [a] -> [Maybe a]
 mFilter = map . boolMaybe
 
--- implementation of filter
-filter :: (a -> Bool) -> [a] -> [a]
-filter _ [] = []
-filter f (x:xs)
-    | f x = x : filter f xs
-    | otherwise = filter f xs
-
--- implementation of length
-length :: (Integral n, Foldable t) => t a -> n
-length = foldr ((+).(const 1)) 0
-length' :: (Integral n, Functor t, Foldable t) => t a -> n
-length' = sum . (fmap $ const 1)
-
--- implementation of maybe, fromMaybe, and catMaybes
-maybe :: a -> (b -> a) -> (Maybe b) -> a
-maybe d _ Nothing = d
-maybe _ f (Just x) = f x
-
+-- implementation of fromMaybe, and catMaybes
 fromMaybe :: a -> Maybe a -> a
 fromMaybe = (`maybe` id)
 
@@ -195,21 +118,7 @@ applyAll :: [(a -> b)] -> a -> [b]
 applyAll fs x = map ($x) fs
 
 main = do
-    mapM_ print ["hello" ++ " world" == "hello world"
-                ,reverse "nope" == "epon"
-                ,map(+2) [3] == [5]
-                ,fmap (+2) (Just 3) == Just 5
-                ,range 1 5 == [1,2,3,4,5]
-                ,range' 1 5 == [1,2,3,4,5]
-                ,range 5 1 == []
-                ,range' 5 1 == []
-                ,zip [1,2,3] [4,5,6,7] == [(1,4),(2,5),(3,6)]
-                ,zip [1,2,3,7] [4,5,6] == [(1,4),(2,5),(3,6)]
-                ,foldl (-) 0 [1,2,3,4] == -10 -- (((1 - 2) - 3) - 4) - 0
-                ,foldl' (-) 0 [1,2,3,4] == -10
-                ,foldr (-) 0 [1,2,3,4] == -2 -- 1 - (2 - (3 - (4 - 0)))
-                ,foldr' (-) 0 [1,2,3,4] == -2
-                ,floop (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
+    mapM_ print [floop (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
                 ,floop (Nothing : ( map Just [1,2,3,4,5])) == Nothing
                 ,floop' (map Just [1,2,3,4,5]) == Just [1,2,3,4,5]
                 ,floop' (Nothing : ( map Just [1,2,3,4,5])) == Nothing
